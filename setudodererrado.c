@@ -1,13 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdbool.h>
 
 #define MAX 6
 
 /*DEF - ESTRUTURA MATRIZ*/
-//OBS: TALVEZ MUDAR OS DADOS PARA CHAR
-
 typedef struct{
     int **dados;
     int lin, col;
@@ -65,21 +63,17 @@ void exprode(){
 }
 
 int verificaPosicao(Matriz *m, int l, int c){
-    //printf("Entrei em ver posicao\n");
     if(m == NULL) return 0;
-    //printf("Segunda ver em ver posicao\n");
     if(l < 0 || c < 0 || l > m->lin || c > m->col){
         printf("Valores invalidos, para verificacao de conflito.\n");
         return 0;
     }
     printf("Verificando colisao na posicao [%d][%d], elem = %d\n", l, c, m->dados[l][c]);
-    //return m->dados[l][c];
     if(m->dados[l][c] == 0) return 0;
     return 1;
 }
 
 int verificaElemento(Matriz *m, int l, int c, int cor){
-    //printf("Entrei em ver elemento\n");
     if(m == NULL) return 0;
     printf("ver elemento, l=%d e c=%d\n", l, c);
     if(l < 0 || c < 0 || l > m->lin || c > m->col){
@@ -88,7 +82,6 @@ int verificaElemento(Matriz *m, int l, int c, int cor){
     }
     int elem = m->dados[l][c];
     if(elem == cor){
-        //exprode();
         return 1;
     }
     return 0;
@@ -177,22 +170,6 @@ void imprime(Matriz *m){
     printf("Matriz imprimida com sucesso.\n");
 }
 
-
-/*DEF ESTRUTURA BOMBA*/
-
-/*typedef struct{
-    int x;
-    int y;
-}Coordenada;
-
-typedef struct{
-    Coordenada inicio;
-    Coordenada final;
-    int tam;
-    char *cor;
-}Bomba;*/
-
-
 /*LISTA DE COMPOSIÇÃO - CONTÉM A COMPOSIÇÃO DO KIT*/
 //OBS: talvez uma lista encadeada seja melhor
 
@@ -216,7 +193,6 @@ ListaComposicao *criaListaComposicao(){
 void destroiListaComposicao(ListaComposicao *v){
     if(v!=NULL){
         for(int i=0; i<v->tam;i++){
-            //printf("Liberando elemento %d\n", i);
             free(v->lista[i]);
         }
     }
@@ -235,14 +211,11 @@ void insereListaComposicao(ListaComposicao *v, char *tamcor){
     v->lista[v->tam] = (char*)malloc(strlen(tamcor)*sizeof(char));
     strcpy(v->lista[v->tam], tamcor);
     v->tam++;
-    //printf("Elemento inserido na lista de composicao.\n");
 }
 
 int procuraListaComposicao(ListaComposicao *l, char *elemento){
     if(l == NULL) return 0;
-    //printf("\tEntrei no Procura lista\n");
     for(int i=0; i<l->tam; i++){
-        //printf("elemento %.3s pos %d\n", l->lista[i], i);
         if(l->lista[i] == NULL) continue;
         if(strcmp(l->lista[i], elemento) == 0){
             l->lista[i] = NULL;
@@ -271,24 +244,20 @@ ListaComposicao *copiaListaComposicao(ListaComposicao *l){
     return copia;
 }
 
-/*CONSTRUÇÃO DO CÓDIGO*/
-
-/*Bomba *criaBomba(char *linha){
-    Bomba *b = (Bomba*) malloc (sizeof(Bomba));
-    if(b != NULL){
-        b->cor = (char*) malloc (2*sizeof(char));
-        sscanf(linha, "%d %d %d %d %d %s", &b->inicio.x, &b->inicio.y,
-         &b->final.x, &b->final.y, &b->tam, &b->cor);
-    }
-    return b;
+int listaComposicaoVazia(ListaComposicao *l){
+    if(l == NULL) return 0;
+    for(int i=0; i<l->tam; i++)
+        if(l->lista[i] != NULL) return 0;
 }
 
-void detroiBomba(Bomba *b){
-    if(b!=NULL){
-        free(b->cor);
-        free(b);
-    }
-}*/
+/*CONSTRUÇÃO DO CÓDIGO*/
+
+void reinicia(ListaComposicao *lista, ListaComposicao *listaCopia, Matriz *m){
+    if(lista == NULL|| listaCopia == NULL || m == NULL) return;
+    destroiListaComposicao(listaCopia);             //pq esse trecho funciona? Ao destruir, a referencia também não deveria ser 
+    listaCopia = copiaListaComposicao(lista);       //destruida? Eh o fato de q uma nova lista é criada quando se faz a copia e a sorte
+    zeraMatriz(m);                                  //de ter listaCopia declarada como uma var de listaComposicao?
+}
 
 int codificaCor(char *tag, int *cor){
     if(tag == NULL) return 0;
@@ -313,11 +282,11 @@ void verificaValidadeComposicao(int qtd, char *tamcor, int *area){
     char tam[2] = {0};
     printf("Aqui, %.1s * %d\n", tamcor, qtd);
     sscanf(tamcor, "%1s", tam);
-    //printf("Aqui\n");
     *area += (qtd*atoi(tam));
     printf("Area: %d\n", *area);
 }
 
+//se explode ou tem algum problema com a conf, retorna 1
 int leLinhaConfiguracao(char *linha, char *token, ListaComposicao *lista, Matriz *matriz){
     if(lista == NULL || matriz == NULL){
         printf("Falha ao configurar\n");
@@ -336,14 +305,12 @@ int leLinhaConfiguracao(char *linha, char *token, ListaComposicao *lista, Matriz
         else if (aux == 3) x2 = atoi(token)-1;
         else if (aux == 4){
             sscanf(token, "%3s", tamcor);
-            //strcpy(tamcor, token);
         }
         aux++;
     }while(token = strtok(NULL, " "));
     printf("Print %d %d %d %d  |  \n[%s]\tLista: ", x1, y1, x2, y2, tamcor);
     imprimeListaComposicao(lista);
     if(!procuraListaComposicao(lista, tamcor)){
-        //adicionar mais coisas, se a bomba nao pertence, o kit nao eh valido
         printf("A bomba nao pertence a composicao.\n");
         return  1;
     }
@@ -391,7 +358,6 @@ void leLinhaComposicao(char *linha, char *token, ListaComposicao *lista, int *ar
         else if(aux == 1){
             sscanf(token, "%3s", tamcor);
             printf("\n\t\t\t\t\t\tTamcor: [%s]\n", tamcor);
-            //strcpy(tamcor, token);
         }
         aux++;
     }while(token = strtok(NULL, " "));
@@ -433,19 +399,45 @@ void processaConfiguracao(char *nomeArquivo, ListaComposicao *lista, Matriz *mat
     FILE *arq;
     arq = fopen(nomeArquivo, "r");
     if(arq == NULL){
-        printf("Erro ao abrir o arquivo\n");
+        perror("Erro ao abrir o arquivo\n");
+        fclose(arq);
+        free(arq);
         return;
     }
     ListaComposicao *listaCopia = copiaListaComposicao(lista);
     char *token;
     char *linha = (char*)malloc(15*sizeof(char));
-    int check = 0;
     int itera = 0;
+    bool valido = true;
     while(!feof(arq)){
         printf("\t\t----------ITERACAO %d----------\n", itera);
         fgets(linha, 15, arq);
-        //check = leLinhaConfiguracao(linha, token, lista, matriz);
-        leLinhaConfiguracao(linha, token, listaCopia, matriz);
+
+        if(strcmp(linha, "\n") == 0 || feof(arq)){  //tem q pegar um álem do eof, senão exclui a última bomba, arrumar
+            if(valido){
+                printf("\n\t\t\t\tPROCESSANDO CONFIGURACAO DO KIT\n\n");
+                if(!listaComposicaoVazia(listaCopia))
+                    printf("A configuracao eh valida porem nao atende a composicao especificada"
+                    " pois nem todos os elementos da composicao foram utilizados.\n");
+                else
+                    printf("A configuracao do Kit eh valida!\n");
+                imprime(matriz);
+            }
+            reinicia(lista, listaCopia, matriz);
+            //imprimeListaComposicao(listaCopia);
+            //imprime(matriz);
+            valido = true;
+            itera = 0;
+            continue;
+        }
+
+        if(!valido) continue;
+
+        //se exprode 
+        if(leLinhaConfiguracao(linha, token, listaCopia, matriz)){
+            valido = false;
+        }
+
         itera++;
     }
     fclose(arq);
@@ -453,20 +445,12 @@ void processaConfiguracao(char *nomeArquivo, ListaComposicao *lista, Matriz *mat
     free(linha);
     free(token);
     destroiListaComposicao(listaCopia);
+    free(listaCopia);
 }
 
 int main(int argc, char *argv[]){
 
     Matriz *teste = criaMatriz();
-    /*printf("\tinserindo elementos\n");
-    insereElem(teste, 1, 1, 7);
-    insereElem(teste, 2, 2, 7);
-    printf("\tVerificando posicao\n");
-    verificaPosicao(teste, 1, 1);
-    printf("\tVerificando elemento\n");
-    verificaElemento(teste, 1, 1, 7);
-    printf("\tVerificando explosao\n");
-    verificaExplosao(teste, 2, 1, 3, 1, 7);*/
 
     printf("\tTestes lista\n");
     ListaComposicao *lista = criaListaComposicao();
@@ -484,6 +468,8 @@ int main(int argc, char *argv[]){
     printf("\tDestruindo elementos\n");
     destroiListaComposicao(lista);
     destroiMatriz(teste);
+    free(teste);
+    free(lista);
 
     return 0;
 }
